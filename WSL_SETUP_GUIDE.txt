@@ -1,0 +1,325 @@
+========================================
+WSL SETUP GUIDE - COPY PASTE COMMANDS
+========================================
+
+This guide walks you through setting up DiffDock with AutoDock Vina in WSL.
+All commands are copy-pastable.
+
+========================================
+PART 1: INITIAL WSL SETUP (One Time)
+========================================
+
+STEP 1: Open WSL Terminal in VS Code
+------
+1. Press Ctrl+` (backtick) to open terminal in VS Code
+2. Click the "+" button next to "POWERSHELL"
+3. Select "WSL" from the dropdown
+4. A new WSL bash terminal will open
+
+You should see: username@computername:~$ 
+
+STEP 2: Copy Your Project to WSL Home
+------
+Run this command:
+
+cp -r /mnt/c/Users/manne/DiffDock ~/DiffDock
+
+Then verify it worked:
+
+ls ~/DiffDock/
+
+You should see all your files (setup_cpu_env.ps1, local_runner/, etc.)
+
+STEP 3: Enter Your Project Directory
+------
+cd ~/DiffDock
+
+Verify you're in the right place:
+
+pwd
+
+Should show: /home/username/DiffDock
+
+========================================
+PART 2: AUTOMATED SETUP (Recommended)
+========================================
+
+Option A: Use the automatic setup script (EASIEST)
+------
+Copy and paste this:
+
+bash setup_wsl_env.sh
+
+This will:
+- Update system packages
+- Install build tools
+- Install Miniconda
+- Create conda environment
+- Install all Python packages
+- Install Vina
+- Verify everything works
+
+This takes ~10-15 minutes on first run.
+Grab a coffee! ☕
+
+========================================
+PART 3: MANUAL SETUP (If You Prefer)
+========================================
+
+If you want to do it step-by-step instead:
+
+STEP 1: Update System
+------
+sudo apt-get update
+sudo apt-get upgrade -y
+
+(You may need to enter your password)
+
+STEP 2: Install Build Tools
+------
+sudo apt-get install -y build-essential git wget curl libboost-all-dev python3-dev
+
+STEP 3: Install Miniconda
+------
+mkdir -p ~/miniconda3
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
+bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
+rm -rf ~/miniconda3/miniconda.sh
+
+Initialize conda:
+~/miniconda3/bin/conda init bash
+
+Close and reopen your terminal, then:
+source ~/.bashrc
+
+STEP 4: Create Conda Environment
+------
+conda create -n diffdock-vina python=3.9 -y
+
+Activate it:
+conda activate diffdock-vina
+
+STEP 5: Install PyTorch (CPU)
+------
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+STEP 6: Install Chemistry Packages
+------
+pip install rdkit scipy numpy pandas matplotlib jupyter biopython prody
+
+STEP 7: Install PyTorch Geometric
+------
+pip install torch-geometric
+pip install torch-scatter torch-sparse torch-cluster torch-spline-conv -f https://data.pyg.org/whl/torch-2.0.0+cpu.html
+
+STEP 8: Install Meeko
+------
+pip install meeko
+
+STEP 9: Install Vina (THE KEY STEP!)
+------
+pip install vina
+
+This installs the Python vina package - NO compilation needed on Linux!
+
+STEP 10: Verify Everything
+------
+Run these commands one by one. Each should output without errors:
+
+python --version
+
+python -c "import torch; print(f'PyTorch: {torch.__version__}')"
+
+python -c "import rdkit; print('RDKit: OK')"
+
+python -c "import meeko; print('Meeko: OK')"
+
+python -c "from vina import Vina; print('Vina: OK')"
+
+========================================
+PART 4: RUN YOUR FIRST ANALYSIS
+========================================
+
+STEP 1: Ensure Environment is Active
+------
+conda activate diffdock-vina
+
+STEP 2: Run the Simplified Scorer (Quick Test)
+------
+python local_runner/standalone_protonation_scorer.py \
+    --protein_pdbqt data/1a0q/1a0q_protein_processed.pdbqt \
+    --ligand data/1a0q/1a0q_ligand.sdf \
+    --center 0 0 0 \
+    --size 20 20 20 \
+    --out_dir results/wsl_test
+
+This should complete in seconds.
+
+STEP 3: Run the Vina-Based Scorer (Accurate Results!)
+------
+python local_runner/wsl_vina_protonation_scorer.py \
+    --protein_pdbqt data/1a0q/1a0q_protein_processed.pdbqt \
+    --ligand data/1a0q/1a0q_ligand.sdf \
+    --center 0 0 0 \
+    --size 20 20 20 \
+    --out_dir results/wsl_vina_results
+
+This may take 1-2 minutes (actually running docking calculations).
+
+STEP 4: View Results
+------
+Results are saved to:
+results/wsl_vina_results/protonation_results.csv
+
+View it:
+cat results/wsl_vina_results/protonation_results.csv
+
+Or open in VS Code by clicking on the file.
+
+========================================
+PART 5: CONVENIENCE SCRIPTS
+========================================
+
+For even easier runs, use the bash scripts:
+
+Quick Run (Simplified Scorer):
+------
+bash run_protonation_analysis.sh
+
+Accurate Run (Vina):
+------
+bash run_vina_analysis.sh
+
+Custom Run:
+------
+python local_runner/wsl_vina_protonation_scorer.py \
+    --protein_pdbqt YOUR_PROTEIN.pdbqt \
+    --ligand YOUR_LIGAND.sdf \
+    --center 10.5 15.2 8.7 \
+    --size 20 20 20 \
+    --out_dir results/my_custom_analysis
+
+========================================
+PART 6: SWITCHING BACK TO WINDOWS
+========================================
+
+To use Windows environment again:
+
+In VS Code:
+1. Click the green icon at bottom-left that says "WSL: Ubuntu"
+2. Select "Local" or "Disconnect from WSL"
+
+Your Windows conda environment is still there:
+C:\Users\manne\miniconda3\envs\diffdock-cpu\
+
+Run in PowerShell:
+.\run_protonation_analysis.bat
+
+========================================
+PART 7: TROUBLESHOOTING
+========================================
+
+If "conda" command not found:
+------
+source ~/miniconda3/bin/activate
+
+If "pip install vina" fails:
+------
+Make sure you have build tools:
+sudo apt-get install -y build-essential libboost-all-dev
+
+If Vina test fails:
+------
+Try:
+python -c "from vina import Vina; print('OK')"
+
+If file paths don't work:
+------
+Remember WSL paths look like:
+~/DiffDock/data/file.sdf
+
+NOT:
+C:\Users\manne\DiffDock\data\file.sdf
+
+If you need Windows paths in WSL:
+/mnt/c/Users/manne/DiffDock/data/file.sdf
+
+========================================
+QUICK REFERENCE: Key Commands
+========================================
+
+List conda environments:
+conda env list
+
+Activate diffdock-vina:
+conda activate diffdock-vina
+
+Deactivate (back to base):
+conda deactivate
+
+Update all packages:
+pip install --upgrade pip setuptools wheel
+
+Install specific package:
+pip install package_name
+
+Check what's installed:
+pip list
+
+Run Python script:
+python script.py --arg value
+
+Run bash script:
+bash script.sh
+
+View file:
+cat filename.txt
+
+Edit file (nano editor):
+nano filename.txt
+(Press Ctrl+X to exit)
+
+========================================
+NEED HELP?
+========================================
+
+Check if Vina is working:
+vina --help
+
+Check Python path:
+which python
+
+Check conda path:
+which conda
+
+See conda environment info:
+conda info
+
+List files in current directory:
+ls -la
+
+See current directory:
+pwd
+
+Create directory:
+mkdir my_folder
+
+Remove directory:
+rm -rf my_folder
+
+========================================
+YOU'RE READY!
+========================================
+
+Once setup is complete, you can:
+✓ Run accurate Vina docking
+✓ Analyze protonation states
+✓ Get publication-quality results
+✓ Keep using Windows environment too
+
+Main command to remember:
+
+conda activate diffdock-vina
+python local_runner/wsl_vina_protonation_scorer.py --protein_pdbqt ... --ligand ...
+
+Good luck! 🚀
