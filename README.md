@@ -1,8 +1,8 @@
 # Quantum DiffDock
 
 This project is a fork of
-[DiffDock](https://github.com/gcorso/DiffDock) exploring physically
-informed, quantum-inspired pipeline for structure-based virtual screening. This repo has very minimal research value, and was primarily a fun side-project exploring [a really cool paper on diffusion models in computational biology]([url](https://arxiv.org/abs/2210.01776)).
+[DiffDock](https://github.com/gcorso/DiffDock) exploring a physically
+informed, quantum-inspired pipeline for structure-based virtual screening. This repo has very minimal research value, and was primarily a fun side-project exploring [a really cool paper on diffusion models in computational biology](https://arxiv.org/abs/2210.01776).
 
 ## Project contribution
 
